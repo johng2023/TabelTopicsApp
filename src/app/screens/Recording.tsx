@@ -44,40 +44,35 @@ export function Recording() {
     };
   }, []);
 
-  const generateThumbnail = (videoBlob: Blob): Promise<string> => {
+  const generateThumbnailBlob = (videoBlob: Blob): Promise<Blob | null> => {
     return new Promise((resolve) => {
       const video = document.createElement("video");
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-
-      video.src = URL.createObjectURL(videoBlob);
+  
+      const objectUrl = URL.createObjectURL(videoBlob);
+      video.src = objectUrl;
       video.muted = true;
       video.playsInline = true;
-
+  
       video.onloadeddata = () => {
-        // Seek to 1 second in or 10% of duration
         video.currentTime = Math.min(1, video.duration * 0.1);
       };
-
+  
       video.onseeked = () => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx?.drawImage(video, 0, 0);
-        
+  
         canvas.toBlob((blob) => {
-          if (blob) {
-            const thumbnailUrl = URL.createObjectURL(blob);
-            resolve(thumbnailUrl);
-          } else {
-            resolve(""); // Fallback if thumbnail generation fails
-          }
-          URL.revokeObjectURL(video.src);
+          URL.revokeObjectURL(objectUrl);
+          resolve(blob); // returns Blob | null
         }, "image/jpeg", 0.8);
       };
-
+  
       video.onerror = () => {
-        resolve(""); // Fallback if video can't load
-        URL.revokeObjectURL(video.src);
+        URL.revokeObjectURL(objectUrl);
+        resolve(null); // null means no thumbnail, that's fine
       };
     });
   };
@@ -112,31 +107,22 @@ export function Recording() {
 
       mediaRecorder.onstop = async () => {
         const durationSeconds = finalDurationSecondsRef.current;
-        const videoBlob = new Blob(videoChunksRef.current, { type: "video/webm" });
-        const videoUrl = URL.createObjectURL(videoBlob);
-        const thumbnailUrl = await generateThumbnail(videoBlob);
+        const videoBlob = new Blob(videoChunksRef.current, { type: 'video/webm' });
+        const thumbnailBlob = await generateThumbnailBlob(videoBlob);
 
-        const recordingId = Date.now().toString();
-
-        saveRecording({
-          id: recordingId,
+        await saveRecording({
+          id: Date.now().toString(),
           prompt,
-          audioUrl: "", // Legacy field, keeping for compatibility
-          videoUrl,
-          thumbnailUrl,
+          audioUrl: '',
+          videoBlob,
+          thumbnailBlob: thumbnailBlob ?? undefined, 
           duration: durationSeconds,
           createdAt: new Date(),
         });
-
-        // Track analytics
+      
         analytics.stopRecording(durationSeconds);
-
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-        }
-        navigate("/history", {
-          state: { celebrate: true, durationSeconds },
-        });
+        if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+        navigate('/history', { state: { celebrate: true, durationSeconds } });
       };
 
       mediaRecorder.start();

@@ -1,3 +1,5 @@
+import { supabase } from './supabase';
+
 export const TABLE_TOPICS = [
   "If you could have dinner with any historical figure, who would it be and why?",
   "What is the best piece of advice you've ever received?",
@@ -45,23 +47,71 @@ export interface Recording {
   createdAt: Date;
 }
 
-export function saveRecording(recording: Recording): void {
-  const recordings = getRecordings();
-  recordings.unshift(recording);
-  localStorage.setItem("recordings", JSON.stringify(recordings));
+export async function saveRecording(recording: Omit<Recording, 'videoUrl' | 'thumbnailUrl'> & {
+  videoBlob: Blob;
+  thumbnailBlob?: Blob;
+}): Promise<void> {
+  const { videoBlob, thumbnailBlob, ...meta } = recording;
+
+  // Upload video
+  const videoPath = `videos/${meta.id}.webm`;
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('recordings')
+    .upload(videoPath, videoBlob, { contentType: 'video/webm' });
+  
+  console.log('Upload result:', uploadData, uploadError);
+
+  if (uploadError) {
+    console.error('Video upload failed:', uploadError);
+    return;
+  }
+
+  const { data: videoData } = supabase.storage.from('recordings').getPublicUrl(videoPath);
+
+  // Save metadata to database
+  await supabase.from('recordings').insert({
+    id: meta.id,
+    device_id: getDeviceId(), // add this
+    prompt: meta.prompt,
+    video_url: videoData.publicUrl,
+    thumbnail_url: '',
+    duration: meta.duration,
+    created_at: meta.createdAt.toISOString(),
+  });
+
 }
 
-export function getRecordings(): Recording[] {
-  const stored = localStorage.getItem("recordings");
-  if (!stored) return [];
-  const recordings = JSON.parse(stored);
-  return recordings.map((r: Recording) => ({
-    ...r,
-    createdAt: new Date(r.createdAt),
+function getDeviceId(): string {
+  let deviceId = localStorage.getItem('device_id');
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem('device_id', deviceId);
+  }
+  return deviceId;
+}
+
+export async function getRecordings(): Promise<Recording[]> {
+  const { data, error } = await supabase
+  .from('recordings')
+  .select('*')
+  .eq('device_id', getDeviceId()) // add this
+  .order('created_at', { ascending: false });
+
+
+  if (error || !data) return [];
+
+  return data.map((r) => ({
+    id: r.id,
+    prompt: r.prompt,
+    audioUrl: '',
+    videoUrl: r.video_url,
+    thumbnailUrl: r.thumbnail_url,
+    duration: r.duration,
+    createdAt: new Date(r.created_at),
   }));
 }
 
-export function deleteRecording(id: string): void {
-  const recordings = getRecordings().filter((r) => r.id !== id);
-  localStorage.setItem("recordings", JSON.stringify(recordings));
+export async function deleteRecording(id: string): Promise<void> {
+  await supabase.storage.from('recordings').remove([`videos/${id}.webm`, `thumbnails/${id}.jpg`]);
+  await supabase.from('recordings').delete().eq('id', id);
 }

@@ -32,16 +32,16 @@ export function History() {
     }
   }, []);
 
-  const loadRecordings = () => {
-    const loadedRecordings = getRecordings();
+  const loadRecordings = async () => {
+    const loadedRecordings = await getRecordings();
     setRecordings(loadedRecordings);
     analytics.viewHistory(loadedRecordings.length);
   };
 
-  const handleDelete = (id: string, event: React.MouseEvent) => {
+  const handleDelete = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
     if (confirm("Delete this recording?")) {
-      deleteRecording(id);
+      await deleteRecording(id);
       analytics.deleteRecording(id);
       loadRecordings();
       if (selectedRecording?.id === id) {
