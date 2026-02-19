@@ -107,7 +107,9 @@ export function Recording() {
 
       mediaRecorder.onstop = async () => {
         const durationSeconds = finalDurationSecondsRef.current;
-        const videoBlob = new Blob(videoChunksRef.current, { type: 'video/webm' });
+        
+        const mimeType = mediaRecorderRef.current?.mimeType || 'video/webm';
+const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
         const thumbnailBlob = await generateThumbnailBlob(videoBlob);
 
         await saveRecording({

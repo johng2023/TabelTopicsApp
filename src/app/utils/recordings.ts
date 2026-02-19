@@ -54,10 +54,13 @@ export async function saveRecording(recording: Omit<Recording, 'videoUrl' | 'thu
   const { videoBlob, thumbnailBlob, ...meta } = recording;
 
   // Upload video
-  const videoPath = `videos/${meta.id}.webm`;
+  const isMP4 = videoBlob.type.includes('mp4');
+  const videoPath = `videos/${meta.id}.${isMP4 ? 'mp4' : 'webm'}`;
+  const contentType = isMP4 ? 'video/mp4' : 'video/webm';
+  
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from('recordings')
-    .upload(videoPath, videoBlob, { contentType: 'video/webm' });
+    .upload(videoPath, videoBlob, { contentType });
   
   console.log('Upload result:', uploadData, uploadError);
 
