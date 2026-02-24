@@ -42,7 +42,7 @@ export function Home() {
       <main className="flex-1 px-6 pb-8 overflow-y-auto">
         {/* Hero Section - Simplified */}
         <div className="pt-6 pb-4 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-[#1B2A4A] mb-2">
             Become the best speaker<br />
             <span className="text-[#C9A84C]">in your club.</span>
           </h2>
