@@ -128,6 +128,19 @@ Deno.serve(async (req) => {
       { headers: { 'Authorization': Deno.env.get('ASSEMBLYAI_API_KEY')! } }
     )
 
+    if (!assemblyResponse.ok) {
+      const errText = await assemblyResponse.text()
+      console.error('AssemblyAI poll HTTP error:', assemblyResponse.status, errText)
+      await supabase
+        .from('analyses')
+        .update({ status: 'error', error_message: `AssemblyAI HTTP ${assemblyResponse.status}`, updated_at: new Date().toISOString() })
+        .eq('id', analysis.id)
+      return new Response(
+        JSON.stringify({ status: 'error', error: `AssemblyAI error: ${assemblyResponse.status}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const assemblyData = await assemblyResponse.json()
 
     if (assemblyData.status === 'error') {
@@ -207,6 +220,7 @@ Deno.serve(async (req) => {
         overall_score: feedback.overall_score,
         overall_label: feedback.overall_label,
         scores: feedback.scores,
+        score_explanations: feedback.score_explanations,
         filler_word_breakdown: fillerBreakdown,
         filler_word_total: fillerTotal,
         feedback_points: feedback.feedback_points,
@@ -217,8 +231,12 @@ Deno.serve(async (req) => {
       .select()
       .single()
 
-    if (updateError) {
+    if (updateError || !updated) {
       console.error('Update error:', updateError)
+      return new Response(
+        JSON.stringify({ status: 'error', error: 'Failed to save analysis results' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     return new Response(

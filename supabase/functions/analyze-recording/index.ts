@@ -11,7 +11,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { recording_id } = await req.json()
+    let recording_id: string | undefined
+    try {
+      const body = await req.json()
+      recording_id = body?.recording_id
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     if (!recording_id) {
       return new Response(
