@@ -147,7 +147,7 @@ export function History() {
         {recordings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6">
             <div className="size-20 bg-[#1F2937] rounded-full flex items-center justify-center mb-4">
-              <Play className="size-10 text-gray-400" />
+              <Play className="size-10 text-[#9CA3AF]" />
             </div>
             <p className="text-[#9CA3AF] text-center mb-6">
               No recordings yet. Start practicing to see your recordings here!
