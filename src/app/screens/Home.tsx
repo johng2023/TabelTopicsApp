@@ -39,9 +39,9 @@ export function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col justify-center px-6 pb-12">
+      <main className="mx-auto flex-1 flex flex-col justify-center items-center px-6 pb-12">
         {/* Prompt Card */}
-        <div className="bg-[#1F2937] rounded-2xl p-6 mb-5 border border-white/10">
+        <div className="w-full bg-[#1F2937] rounded-2xl p-6 mb-5 border border-white/10">
           <p className="text-xs uppercase tracking-widest text-[#3B82F6] font-semibold mb-3">
             Your Practice Topic
           </p>
@@ -63,7 +63,7 @@ export function Home() {
         {/* CTA Button */}
         <Button
           onClick={handleStartRecording}
-          className="w-full h-14 text-lg font-semibold bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl"
+          className="mx-auto h-14 text-lg font-semibold bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl"
         >
           Start Recording
         </Button>
