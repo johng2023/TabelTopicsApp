@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { ArrowLeft, BarChart2, Loader2, Play, Trash2, X } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { getRecordings, deleteRecording, type Recording } from "../utils/recordings";
-import { analyzeRecording, getExistingAnalysis, type Analysis } from "../utils/analysis";
+import { analyzeRecording, type Analysis } from "../utils/analysis";
 import { supabase } from "../utils/supabase";
 import { analytics } from "../utils/analytics";
 import { toast } from "sonner";
@@ -60,6 +60,7 @@ export function History() {
 
   const handleAnalyze = async (recording: Recording, event: React.MouseEvent) => {
     event.stopPropagation();
+    if (analyzingIds.has(recording.id)) return;
     setAnalyzingIds(prev => new Set(prev).add(recording.id));
 
     const result = await analyzeRecording(recording.id);
@@ -197,7 +198,7 @@ export function History() {
                       {analyses[recording.id] ? (
                         <div className="flex items-center gap-2">
                           <span className="inline-flex items-center bg-[#1B2A4A] text-white text-xs px-2 py-0.5 rounded-full font-semibold">
-                            {analyses[recording.id].overall_score?.toFixed(1)} / 10
+                            {analyses[recording.id].overall_score?.toFixed(1) ?? '--'} / 10
                           </span>
                           <Button
                             variant="ghost"
