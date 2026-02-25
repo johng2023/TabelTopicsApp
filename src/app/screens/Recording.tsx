@@ -209,7 +209,7 @@ export function Recording() {
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="text-gray-700"
+            className="text-[#9CA3AF] hover:text-[#F9FAFB]"
           >
             <ArrowLeft className="size-5" />
           </Button>
