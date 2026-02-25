@@ -222,7 +222,7 @@ export function Dashboard() {
             </button>
             {transcriptExpanded && (
               <div className="px-4 pb-4">
-                <p className="text-sm text-[#9CA3AF] leading-relaxed">{analysis.transcript}</p>
+                <p className="text-sm text-[#F9FAFB] leading-relaxed">{analysis.transcript}</p>
               </div>
             )}
           </div>
