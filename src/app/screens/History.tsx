@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { ArrowLeft, Play, Trash2, X } from "lucide-react";
+import { ArrowLeft, BarChart2, Loader2, Play, Trash2, X } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { getRecordings, deleteRecording, type Recording } from "../utils/recordings";
+import { analyzeRecording, type Analysis } from "../utils/analysis";
+import { supabase } from "../utils/supabase";
 import { analytics } from "../utils/analytics";
 import { toast } from "sonner";
 
@@ -11,6 +13,8 @@ export function History() {
   const location = useLocation();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [selectedRecording, setSelectedRecording] = useState<Recording | null>(null);
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
+  const [analyses, setAnalyses] = useState<Record<string, Analysis>>({});
 
   useEffect(() => {
     loadRecordings();
@@ -32,10 +36,44 @@ export function History() {
     }
   }, []);
 
+  const loadAnalyses = async (recordingIds: string[]) => {
+    if (recordingIds.length === 0) return;
+    const { data } = await supabase
+      .from('analyses')
+      .select('*')
+      .in('recording_id', recordingIds)
+      .eq('status', 'complete');
+
+    if (data) {
+      const map: Record<string, Analysis> = {};
+      data.forEach((a: Analysis) => { map[a.recording_id] = a; });
+      setAnalyses(map);
+    }
+  };
+
   const loadRecordings = async () => {
     const loadedRecordings = await getRecordings();
     setRecordings(loadedRecordings);
     analytics.viewHistory(loadedRecordings.length);
+    await loadAnalyses(loadedRecordings.map(r => r.id));
+  };
+
+  const handleAnalyze = async (recording: Recording, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (analyzingIds.has(recording.id)) return;
+    setAnalyzingIds(prev => new Set(prev).add(recording.id));
+
+    const result = await analyzeRecording(recording.id);
+
+    setAnalyzingIds(prev => {
+      const next = new Set(prev);
+      next.delete(recording.id);
+      return next;
+    });
+
+    if (result) {
+      setAnalyses(prev => ({ ...prev, [recording.id]: result }));
+    }
   };
 
   const handleDelete = async (id: string, event: React.MouseEvent) => {
@@ -154,6 +192,43 @@ export function History() {
                       <span>{formatTime(recording.duration)}</span>
                       <span>•</span>
                       <span>{formatDate(recording.createdAt)}</span>
+                    </div>
+                    {/* Analysis Button */}
+                    <div className="mt-2">
+                      {analyses[recording.id] ? (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center bg-[#1B2A4A] text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                            {analyses[recording.id].overall_score?.toFixed(1) ?? '--'} / 10
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-6 px-2 text-[#C9A84C] hover:text-[#1B2A4A]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/dashboard/${recording.id}`);
+                            }}
+                          >
+                            <BarChart2 className="size-3 mr-1" />
+                            View Analysis
+                          </Button>
+                        </div>
+                      ) : analyzingIds.has(recording.id) ? (
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Loader2 className="size-3 animate-spin" />
+                          Analyzing...
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-6 px-2 text-[#1B2A4A] hover:bg-[#EEE9DF]"
+                          onClick={(e) => handleAnalyze(recording, e)}
+                        >
+                          <BarChart2 className="size-3 mr-1" />
+                          Analyze
+                        </Button>
+                      )}
                     </div>
                   </div>
 
