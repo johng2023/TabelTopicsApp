@@ -212,6 +212,7 @@ export function Dashboard() {
         {analysis.transcript && (
           <div className="bg-[#1F2937] rounded-xl border border-white/10 overflow-hidden">
             <button
+              type="button"
               className="w-full p-4 flex items-center justify-between text-left"
               onClick={() => setTranscriptExpanded(e => !e)}
             >
