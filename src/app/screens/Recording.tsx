@@ -92,7 +92,7 @@ export function Recording() {
         videoPreviewRef.current.srcObject = stream;
       }
       
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { videoBitsPerSecond: 750_000 });
       mediaRecorderRef.current = mediaRecorder;
       videoChunksRef.current = [];
       startedAtMsRef.current = Date.now();
@@ -107,24 +107,31 @@ export function Recording() {
 
       mediaRecorder.onstop = async () => {
         const durationSeconds = finalDurationSecondsRef.current;
-        
+
         const mimeType = mediaRecorderRef.current?.mimeType || 'video/webm';
-const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
+        const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
         const thumbnailBlob = await generateThumbnailBlob(videoBlob);
 
-        await saveRecording({
-          id: Date.now().toString(),
-          prompt,
-          audioUrl: '',
-          videoBlob,
-          thumbnailBlob: thumbnailBlob ?? undefined, 
-          duration: durationSeconds,
-          createdAt: new Date(),
-        });
-      
-        analytics.stopRecording(durationSeconds);
-        if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-        navigate('/history', { state: { celebrate: true, durationSeconds } });
+        try {
+          await saveRecording({
+            id: Date.now().toString(),
+            prompt,
+            audioUrl: '',
+            videoBlob,
+            thumbnailBlob: thumbnailBlob ?? undefined,
+            duration: durationSeconds,
+            createdAt: new Date(),
+          });
+          analytics.stopRecording(durationSeconds);
+          if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+          navigate('/history', { state: { celebrate: true, durationSeconds } });
+        } catch (err: any) {
+          console.error('Save recording failed:', err);
+          setIsRecording(false);
+          setIsReady(false);
+          if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+          setError('Failed to save your recording. Please try again.');
+        }
       };
 
       mediaRecorder.start(1000);
@@ -196,35 +203,35 @@ const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex flex-col">
+      <div className="min-h-screen bg-[#111827] flex flex-col">
         <header className="p-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="text-gray-700"
+            className="text-[#9CA3AF] hover:text-[#F9FAFB]"
           >
             <ArrowLeft className="size-5" />
           </Button>
         </header>
         <main className="flex-1 flex items-center justify-center px-6">
           <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center size-20 bg-red-100 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center size-20 bg-red-900/30 rounded-full mb-4">
               <AlertCircle className="size-10 text-red-600" />
             </div>
-            <h2 className="font-bold text-xl text-gray-900 mb-3">Camera & Microphone Access Required</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <h2 className="font-bold text-xl text-[#F9FAFB] mb-3">Camera & Microphone Access Required</h2>
+            <p className="text-[#9CA3AF] mb-6">{error}</p>
             <div className="space-y-3">
               <Button 
                 onClick={handleTryAgain}
-                className="w-full bg-[#1B2A4A] hover:bg-[#243660]"
+                className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white"
               >
                 Try Again
               </Button>
               <Button 
                 onClick={() => navigate("/")}
                 variant="outline"
-                className="w-full"
+                className="w-full border-white/20 text-[#F9FAFB] hover:bg-white/10"
               >
                 Go Back
               </Button>
@@ -236,7 +243,7 @@ const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FAF8F4] to-white flex flex-col">
+    <div className="min-h-screen bg-[#111827] flex flex-col">
       {/* Header */}
       <header className="p-4 flex items-center justify-between">
         {!isRecording && (
@@ -244,13 +251,13 @@ const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="text-[#1B2A4A]"
+            className="text-[#9CA3AF] hover:text-[#F9FAFB]"
           >
             <ArrowLeft className="size-5" />
           </Button>
         )}
         {isRecording && <div className="size-10" />}
-        <h1 className="font-bold text-xl text-[#1B2A4A] flex-1 text-center">
+        <h1 className="font-bold text-xl text-[#F9FAFB] flex-1 text-center">
           {isReady ? "Recording" : "Ready to Record"}
         </h1>
         <div className="size-10" />
@@ -260,22 +267,22 @@ const videoBlob = new Blob(videoChunksRef.current, { type: mimeType });
       <main className="flex-1 flex flex-col items-center justify-center px-4 pb-6">
         <div className="w-full max-w-md">
           {/* Prompt Display */}
-          <div className="bg-white rounded-2xl shadow-lg p-4 mb-6">
-            <p className="text-base text-gray-700 leading-relaxed text-center">{prompt}</p>
+          <div className="bg-[#1F2937] rounded-2xl p-4 mb-6 border border-white/10">
+            <p className="text-base text-[#F9FAFB] leading-relaxed text-center">{prompt}</p>
           </div>
 
           {!isReady ? (
             /* Start Recording View */
             <div className="text-center">
-              <div className="inline-flex items-center justify-center size-32 bg-[#EEE9DF] rounded-full mb-6">
-                <Video className="size-16 text-[#C9A84C]" />
+              <div className="inline-flex items-center justify-center size-32 bg-[#1F2937] rounded-full mb-6">
+                <Video className="size-16 text-[#3B82F6]" />
               </div>
-              <p className="text-gray-600 mb-8">
+              <p className="text-[#9CA3AF] mb-8">
                 Click the button below to start recording your video response
               </p>
               <Button
                 onClick={startRecording}
-                className="w-full h-14 text-lg bg-[#1B2A4A] hover:bg-[#243660] rounded-xl"
+                className="w-full h-14 text-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl"
               >
                 <Video className="size-5 mr-2" />
                 Start Recording

@@ -128,31 +128,31 @@ export function History() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FAF8F4] to-white">
+    <div className="min-h-screen bg-[#111827]">
       {/* Header */}
-      <header className="p-4 flex items-center gap-3 sticky top-0 bg-white/90 backdrop-blur-sm border-b border-[#EEE9DF] z-10">
+      <header className="p-4 flex items-center gap-3 sticky top-0 bg-[#111827] border-b border-white/10 z-10">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate("/")}
-          className="text-[#1B2A4A]"
+          className="text-[#9CA3AF] hover:text-[#F9FAFB]"
         >
           <ArrowLeft className="size-5" />
         </Button>
-        <h1 className="font-bold text-xl text-[#1B2A4A]">My Reps</h1>
+        <h1 className="font-bold text-xl text-[#F9FAFB]">My Reps</h1>
       </header>
 
       {/* Main Content */}
       <main className="p-4">
         {recordings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6">
-            <div className="size-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Play className="size-10 text-gray-400" />
+            <div className="size-20 bg-[#1F2937] rounded-full flex items-center justify-center mb-4">
+              <Play className="size-10 text-[#9CA3AF]" />
             </div>
-            <p className="text-gray-500 text-center mb-6">
+            <p className="text-[#9CA3AF] text-center mb-6">
               No recordings yet. Start practicing to see your recordings here!
             </p>
-            <Button onClick={() => navigate("/")} className="bg-[#1B2A4A] hover:bg-[#243660]">
+            <Button onClick={() => navigate("/")} className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white">
               Start Your Rep
             </Button>
           </div>
@@ -162,7 +162,7 @@ export function History() {
               <div
                 key={recording.id}
                 onClick={() => handlePlayRecording(recording)}
-                className="bg-white rounded-xl shadow-sm p-4 border border-[#EEE9DF] cursor-pointer hover:shadow-md transition-shadow"
+                className="bg-[#1F2937] rounded-xl p-4 border border-white/10 cursor-pointer hover:border-white/20 transition-colors"
               >
                 <div className="flex gap-3">
                   {/* Thumbnail/Play Button */}
@@ -179,16 +179,16 @@ export function History() {
                         </div>
                       </>
                     ) : (
-                      <Play className="size-8 text-[#C9A84C]" />
+                      <Play className="size-8 text-[#3B82F6]" />
                     )}
                   </div>
 
                   {/* Recording Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800 line-clamp-2 mb-2">
+                    <p className="text-sm text-[#F9FAFB] line-clamp-2 mb-2">
                       {recording.prompt}
                     </p>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-3 text-xs text-[#9CA3AF]">
                       <span>{formatTime(recording.duration)}</span>
                       <span>•</span>
                       <span>{formatDate(recording.createdAt)}</span>
@@ -197,13 +197,13 @@ export function History() {
                     <div className="mt-2">
                       {analyses[recording.id] ? (
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center bg-[#1B2A4A] text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                          <span className="inline-flex items-center bg-[#3B82F6] text-white text-xs px-2 py-0.5 rounded-full font-semibold">
                             {analyses[recording.id].overall_score?.toFixed(1) ?? '--'} / 10
                           </span>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs h-6 px-2 text-[#C9A84C] hover:text-[#1B2A4A]"
+                            className="text-xs h-6 px-2 text-[#3B82F6] hover:text-[#F9FAFB]"
                             onClick={(e) => {
                               e.stopPropagation();
                               navigate(`/dashboard/${recording.id}`);
@@ -214,7 +214,7 @@ export function History() {
                           </Button>
                         </div>
                       ) : analyzingIds.has(recording.id) ? (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs text-[#9CA3AF]">
                           <Loader2 className="size-3 animate-spin" />
                           Analyzing...
                         </div>
@@ -222,7 +222,7 @@ export function History() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs h-6 px-2 text-[#1B2A4A] hover:bg-[#EEE9DF]"
+                          className="text-xs h-6 px-2 text-[#3B82F6] hover:bg-[#374151]"
                           onClick={(e) => handleAnalyze(recording, e)}
                         >
                           <BarChart2 className="size-3 mr-1" />
@@ -236,7 +236,7 @@ export function History() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 text-gray-400 hover:text-red-600"
+                    className="shrink-0 text-[#9CA3AF] hover:text-red-400"
                     onClick={(e) => handleDelete(recording.id, e)}
                   >
                     <Trash2 className="size-4" />
